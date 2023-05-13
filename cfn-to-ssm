@@ -1,0 +1,27 @@
+---
+Parameters:
+  #InstanceTypeParameter:
+  #  Type: String
+  #  Default: t3.small
+  #  AllowedValues:
+  #    - t3.small
+  #    - m1.small
+  #    - m1.large
+  #  Description: Enter t3.small, m1.small, or m1.large. Default is t3.small.
+  InstanceTypeParameter:
+    Type: 'AWS::SSM::Parameter::Value<String>' # go to parameter store
+    Default: '/myEC2Instance/type' # retrieve this guy
+
+Resources:
+  MyEC2Instance1: 
+    Type: "AWS::EC2::Instance"
+    Properties:
+      InstanceType: !Ref InstanceTypeParameter
+      ImageId: "ami-0889a44b331db0194"
+      KeyName: "nov-key"
+      SecurityGroupIds: 
+        - "sg-06b2caf1032950767"
+      SubnetId: "subnet-016884660fb752b22"
+      Tags: 
+        - Key: "Name"
+          Value: "myEC2Instance"
