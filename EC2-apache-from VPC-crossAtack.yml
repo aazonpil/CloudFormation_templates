@@ -1,0 +1,48 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: "Create and deploy apache on a linux EC2 and reference the sample network stack previously created"
+Resources:
+  MyEC2Instance:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      InstanceType: "t2.micro"
+      ImageId: !FindInMap ["RegionMap", !Ref "AWS::Region", "HVM64"]
+      SecurityGroupIds:
+        - !ImportValue SampleNetworkCrossStack-SecurityGroupID
+      SubnetId: !ImportValue SampleNetworkCrossStack-SubnetID
+      Tags:
+        - Key: "Name"
+          Value: "myEC2Instance"
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+          yum install -y httpd
+          service httpd start
+          chkconfig httpd on
+          echo "<html><body><h1>Welcome to Apache web server!</h1></body></html>" > /var/www/html/index.html
+  MyEIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      InstanceId: !Ref MyEC2Instance
+  MyEIPAssociation:
+    Type: "AWS::EC2::EIPAssociation"
+    Properties:
+      AllocationId: !GetAtt MyEIP.AllocationId
+      InstanceId: !Ref MyEC2Instance
+Mappings:
+  RegionMap:
+    us-west-2:
+      HVM64: ami-0ab193018f3e9351b # Linux 2
+Parameters:
+  InstanceType:
+    Description: Instance type for the EC2 instance
+    Type: String
+    Default: t2.micro
+    AllowedValues: [t2.micro, t2.small, t2.medium]
+Outputs:
+  InstanceIPv4:
+    Description: IPv4 address of the EC2 instance
+    Value: !GetAtt MyEC2Instance.PublicIp
+  InstanceDNSName:
+    Description: DNS name of the EC2 instance
+    Value: !GetAtt MyEC2Instance.PublicDnsName
